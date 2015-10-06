@@ -1,0 +1,38 @@
+{
+  "name": "parse-css-dimension",
+  "version": "1.0.0",
+  "description": "Parse a CSS dimension (i.e., number, length, percentage) into a JavaScript object.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run cover && npm run check-coverage",
+    "cover": "istanbul cover test/index.js",
+    "check-coverage": "istanbul check-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jedmao/parse-css-dimension.git"
+  },
+  "keywords": [
+    "parse",
+    "css",
+    "dimension",
+    "number",
+    "length",
+    "percentage",
+    "unit",
+    "object"
+  ],
+  "author": "Jed Mao <jedmao@outlook.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jedmao/parse-css-dimension/issues"
+  },
+  "homepage": "https://github.com/jedmao/parse-css-dimension#readme",
+  "dependencies": {
+    "css-length-units": "^1.0.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.3.22",
+    "tape": "^4.2.1"
+  }
+}
