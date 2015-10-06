@@ -6,7 +6,7 @@
 
 [![npm](https://nodei.co/npm/parse-css-dimension.svg?downloads=true)](https://nodei.co/npm/parse-css-dimension/)
 
-Parse a CSS dimension (i.e., number, length, percentage) into a JavaScript object.
+Parse a CSS dimension (i.e., [`<number>`](https://developer.mozilla.org/en-US/docs/Web/CSS/number), [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length), [`<percentage>`](https://developer.mozilla.org/en-US/docs/Web/CSS/percentage)) into a JavaScript object.
 
 ## Installation
 
