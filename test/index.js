@@ -1,5 +1,11 @@
 var tape = require('tape');
 var cssLengthUnits = require('css-length-units');
+var cssAngleUnits = require('css-angle-units');
+var cssResolutionUnits = require('css-resolution-units');
+var cssFrequencyUnits = require('css-frequency-units');
+var cssTimeUnits = require('css-time-units');
+
+var units = [].concat(cssLengthUnits, cssAngleUnits, cssResolutionUnits, cssFrequencyUnits, cssTimeUnits);
 
 var parseCssDimension = require('..');
 
@@ -46,18 +52,18 @@ tape('parse-css-unit', function(t) {
 	);
 
 	var validNumbers = {
-		     '12': 12,
+			 '12': 12,
 		   '4.01': 4.01,
 		 '-456.8': -456.8,
-		    '0.0': 0,
+			'0.0': 0,
 		   '+0.0': 0,
 		   '-0.0': 0,
-		    '.60': 0.6,
+			'.60': 0.6,
 		   '10e3': 10000,
 		'-3.4e-2': -0.034
 	};
 
-	cssLengthUnits.forEach(function(unit) {
+	units.forEach(function(unit) {
 		Object.keys(validNumbers).forEach(function(rawNumber) {
 			var num = validNumbers[rawNumber];
 
@@ -78,16 +84,45 @@ tape('parse-css-unit', function(t) {
 				},
 				'parses ' + rawNumber + '%'
 			);
+		});
+	});
 
-			t.deepEqual(
-				parseCssDimension(rawNumber + unit),
-				{
-					'type': 'length',
-					value: num,
-					unit: unit
-				},
-				'parses ' + rawNumber + unit
-			);
+	[
+		{
+			list: cssLengthUnits,
+			'type': 'length'
+		},
+		{
+			list: cssAngleUnits,
+			'type': 'angle'
+		},
+		{
+			list: cssResolutionUnits,
+			'type': 'resolution'
+		},
+		{
+			list: cssFrequencyUnits,
+			'type': 'frequency'
+		},
+		{
+			list: cssTimeUnits,
+			'type': 'time'
+		}
+	].forEach(function(unitDef) {
+		unitDef.list.forEach(function(unit) {
+			Object.keys(validNumbers).forEach(function(rawNumber) {
+				var num = validNumbers[rawNumber];
+
+				t.deepEqual(
+					parseCssDimension(rawNumber + unit),
+					{
+						'type': unitDef.type,
+						value: num,
+						unit: unit
+					},
+					'parses ' + rawNumber + unit
+				);
+			});
 		});
 	});
 
