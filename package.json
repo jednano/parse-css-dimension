@@ -1,6 +1,6 @@
 {
   "name": "parse-css-dimension",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Parse a CSS dimension (i.e., number, length, percentage) into a JavaScript object.",
   "main": "index.js",
   "scripts": {
