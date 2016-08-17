@@ -29,7 +29,14 @@
   },
   "homepage": "https://github.com/jedmao/parse-css-dimension#readme",
   "dependencies": {
-    "css-length-units": "^1.0.0"
+    "css-angle-units": "^1.0.1",
+    "css-frequency-units": "^1.0.1",
+    "css-length-units": "^1.0.0",
+    "css-resolution-units": "^1.0.1",
+    "css-time-units": "^1.0.1",
+    "lodash.fill": "^3.4.0",
+    "lodash.merge": "^4.6.0",
+    "lodash.zipobject": "^4.1.3"
   },
   "devDependencies": {
     "istanbul": "^0.3.22",

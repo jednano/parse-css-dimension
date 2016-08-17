@@ -1,4 +1,19 @@
+var fill = require('lodash.fill');
+var merge = require('lodash.merge');
+var zipObject = require('lodash.zipobject');
 var cssLengthUnits = require('css-length-units');
+var cssAngleUnits = require('css-angle-units');
+var cssResolutionUnits = require('css-resolution-units');
+var cssFrequencyUnits = require('css-frequency-units');
+var cssTimeUnits = require('css-time-units');
+
+var units = [].concat(cssLengthUnits, cssAngleUnits, cssResolutionUnits, cssFrequencyUnits, cssTimeUnits);
+var unitTypeLookup = merge(
+    createLookups(cssAngleUnits, 'angle'),
+    createLookups(cssResolutionUnits, 'resolution'),
+    createLookups(cssFrequencyUnits, 'frequency'),
+    createLookups(cssTimeUnits, 'time')
+);
 
 module.exports = function(value) {
 
@@ -30,7 +45,7 @@ module.exports = function(value) {
 	}
 
 	return {
-		'type': 'length',
+		'type': getTypeFromUnit(unit),
 		value: tryParseFloat(value.substr(0, value.length - unit.length)),
 		unit: unit
 	};
@@ -44,7 +59,7 @@ function countDots(value) {
 function parseUnit(value) {
 	var m = value.match(/\D+$/);
 	var unit = m && m[0];
-	if (unit && cssLengthUnits.indexOf(unit) === -1) {
+	if (unit && units.indexOf(unit) === -1) {
 		throw new Error('Invalid unit: ' + unit);
 	}
 	return unit;
@@ -56,4 +71,12 @@ function tryParseFloat(value) {
 		throw new Error('Invalid number: ' + value);
 	}
 	return result;
+}
+
+function createLookups(list, value) {
+    return zipObject(list, fill(Array(list.length), value));
+}
+
+function getTypeFromUnit(unit) {
+    return unitTypeLookup[unit] || 'length';
 }
