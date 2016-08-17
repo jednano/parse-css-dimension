@@ -18,13 +18,23 @@ $ npm install parse-css-dimension [--save[-dev]]
 
 ```js
 var parseCssDimension = require('parse-css-dimension');
-parseCssDimension('-3.4e-2');  // { type: 'number', value: -0.034 }
-parseCssDimension('42em');     // { type: 'length', value: 42, unit: 'em' }
-parseCssDimension('42deg');    // { type: 'angle', value: 42, unit: 'deg' }
-parseCssDimension('42dpi');    // { type: 'resolution', value: 42, unit: 'dpi' }
-parseCssDimension('42Hz');     // { type: 'frequency', value: 42, unit: 'Hz' }
-parseCssDimension('42ms');     // { type: 'time', value: 42, unit: 'ms' }
-parseCssDimension('42%');      // { type: 'percentage', value: 42 }
+parseCssDimension('-3.4e-2');  // { [Number: -0.034] type: 'number', value: -0.034 }
+parseCssDimension('42em');     // { [Number: 42] type: 'length', value: 42, unit: 'em' }
+parseCssDimension('42deg');    // { [Number: 42] type: 'angle', value: 42, unit: 'deg' }
+parseCssDimension('42dpi');    // { [Number: 42] type: 'resolution', value: 42, unit: 'dpi' }
+parseCssDimension('42Hz');     // { [Number: 42] type: 'frequency', value: 42, unit: 'Hz' }
+parseCssDimension('42ms');     // { [Number: 42] type: 'time', value: 42, unit: 'ms' }
+parseCssDimension('42%');      // { [Number: 42] type: 'percentage', value: 42 }
+```
+
+The result is an instance of `CssDimension`, which allows you to stringify it
+back into its original form via `.toString()` or perform math calculations.
+
+```js
+var result = parseCssDimension('42%');
+result instanceof parseCssDimension.CssDimension; // true
+result.toString(); // 42%
+result + 3; // 45
 ```
 
 ## Testing

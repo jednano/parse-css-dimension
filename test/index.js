@@ -5,11 +5,17 @@ var cssResolutionUnits = require('css-resolution-units');
 var cssFrequencyUnits = require('css-frequency-units');
 var cssTimeUnits = require('css-time-units');
 
-var units = [].concat(cssLengthUnits, cssAngleUnits, cssResolutionUnits, cssFrequencyUnits, cssTimeUnits);
+var units = [].concat(
+	cssAngleUnits,
+	cssFrequencyUnits,
+	cssLengthUnits,
+	cssResolutionUnits,
+	cssTimeUnits
+);
 
 var parseCssDimension = require('..');
 
-tape('parse-css-unit', function(t) {
+tape('parse-css-dimension', function(t) {
 
 	t.throws(
 		function() {
@@ -51,14 +57,38 @@ tape('parse-css-unit', function(t) {
 		'throws when an invalid number of "foo42" is provided'
 	);
 
+	t.equal(
+		parseCssDimension('42%') instanceof parseCssDimension.CssDimension,
+		true,
+		'creates an instance of CssDimension'
+	);
+
+	t.equal(
+		parseCssDimension('42%') + 3,
+		45,
+		'supports adding numbers to the result'
+	);
+
+	t.equal(
+		parseCssDimension('42%').toString() + 'foo',
+		'42%foo',
+		'stringifies a percent'
+	);
+
+	t.equal(
+		parseCssDimension('42').toString() + 'foo',
+		'42foo',
+		'stringifies a number'
+	);
+
 	var validNumbers = {
-			 '12': 12,
+		     '12': 12,
 		   '4.01': 4.01,
 		 '-456.8': -456.8,
-			'0.0': 0,
+		    '0.0': 0,
 		   '+0.0': 0,
 		   '-0.0': 0,
-			'.60': 0.6,
+		    '.60': 0.6,
 		   '10e3': 10000,
 		'-3.4e-2': -0.034
 	};
@@ -67,23 +97,17 @@ tape('parse-css-unit', function(t) {
 		Object.keys(validNumbers).forEach(function(rawNumber) {
 			var num = validNumbers[rawNumber];
 
-			t.deepEqual(
-				parseCssDimension(rawNumber),
-				{
-					'type': 'number',
-					value: num
-				},
-				'parses ' + rawNumber
-			);
+			var d1 = parseCssDimension(rawNumber);
+			var msg = 'parses ' + rawNumber;
+			t.equal(d1.type, 'number', msg);
+			t.equal(d1.value, num, msg);
+			t.equal(d1.unit, undefined, msg);
 
-			t.deepEqual(
-				parseCssDimension(rawNumber + '%'),
-				{
-					'type': 'percentage',
-					value: num
-				},
-				'parses ' + rawNumber + '%'
-			);
+			var d2 = parseCssDimension(rawNumber + '%');
+			msg += '%';
+			t.equal(d2.type, 'percentage', msg);
+			t.equal(d2.value, num, msg);
+			t.equal(d2.unit, '%', msg);
 		});
 	});
 
@@ -113,15 +137,11 @@ tape('parse-css-unit', function(t) {
 			Object.keys(validNumbers).forEach(function(rawNumber) {
 				var num = validNumbers[rawNumber];
 
-				t.deepEqual(
-					parseCssDimension(rawNumber + unit),
-					{
-						'type': unitDef.type,
-						value: num,
-						unit: unit
-					},
-					'parses ' + rawNumber + unit
-				);
+				var d1 = parseCssDimension(rawNumber + unit);
+				var msg = 'parses ' + rawNumber + unit;
+				t.equal(d1.type, unitDef.type, msg);
+				t.equal(d1.value, num, msg);
+				t.equal(d1.unit, unit, msg);
 			});
 		});
 	});
