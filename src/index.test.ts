@@ -45,13 +45,20 @@ test('throws when an invalid number of "foo42" is provided', (t) => {
 
 test('parse result is instance of CssDimension', (t) => {
 	t.is(
-		(CssDimension.parse('42%') as CssDimension) instanceof CssDimension,
+		CssDimension.parse('42%') instanceof CssDimension,
 		true,
 	);
 });
 
 test('returns the numeric value with .value', (t) => {
 	t.true(typeof new CssDimension('42%').value === 'number');
+});
+
+test('adding a number yields a concatenated string', (t) => {
+	t.is(
+		(CssDimension.parse('42%') as any) + 3,
+		'42%3',
+	);
 });
 
 test('stringifies a percent', (t) => {

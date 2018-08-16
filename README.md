@@ -40,8 +40,8 @@ back into its original form via `.toString()` or perform math calculations.
 const result = CssDimension.parse('42%') || new CssDimension('42%');
 result instanceof CssDimension; // true
 result.toString(); // 42%
-result.valueOf(); // 42
-result + 3; // 45
+result.valueOf(); // 42%
+result.value + 3; // 45
 ```
 
 ## Testing
