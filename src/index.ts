@@ -1,103 +1,114 @@
-var fill = require('lodash.fill');
-var merge = require('lodash.merge');
-var zipObject = require('lodash.zipobject');
+import fill = require('lodash.fill');
+import merge = require('lodash.merge');
+import zipObject = require('lodash.zipobject');
 
-var cssLengthUnits = require('css-length-units');
-var cssAngleUnits = require('css-angle-units');
-var cssResolutionUnits = require('css-resolution-units');
-var cssFrequencyUnits = require('css-frequency-units');
-var cssTimeUnits = require('css-time-units');
+const cssLengthUnits: string[] = require('css-length-units');
+const cssAngleUnits: string[] = require('css-angle-units');
+const cssResolutionUnits: string[] = require('css-resolution-units');
+const cssFrequencyUnits: string[] = require('css-frequency-units');
+const cssTimeUnits: string[] = require('css-time-units');
 
-function CssDimension(value) {
+export default class CssDimension {
 
-	if (/\.\D?$/.test(value)) {
-		throw new Error('The dot should be followed by a number');
+	public static parse(value: string) {
+		return new CssDimension(value) as CssDimension & number;
 	}
 
-	if (/^[+-]{2}/.test(value)) {
-		throw new Error('Only one leading +/- is allowed');
+	public type: string;
+	public value: number;
+	public unit: string;
+
+	constructor(value: string) {
+		this.validateNumber(value);
+		this.validateSign(value);
+		this.validateDots(value);
+
+		if (/%$/.test(value)) {
+			this.type = 'percentage';
+			this.value = tryParseFloat(value);
+			this.unit = '%';
+			return;
+		}
+
+		const unit = parseUnit(value);
+		if (!unit) {
+			this.type = 'number';
+			this.value = tryParseFloat(value);
+			return;
+		}
+
+		this.type = unitToType(unit);
+		this.value = tryParseFloat(value.substr(0, value.length - unit.length));
+		this.unit = unit;
 	}
 
-	if (countDots(value) > 1) {
-		throw new Error('Only one dot is allowed');
+	public valueOf() {
+		return this.toString();
 	}
 
-	if (/%$/.test(value)) {
-		this.type = 'percentage';
-		this.value = tryParseFloat(value);
-		this.unit = '%';
-		return;
+	public toString() {
+		return this.value + (this.unit || '');
 	}
 
-	var unit = parseUnit(value);
-	if (!unit) {
-		this.type = 'number';
-		this.value = tryParseFloat(value);
-		return;
+	private validateNumber(value: string) {
+		if (/\.\D?$/.test(value)) {
+			throw new Error('The dot should be followed by a number');
+		}
 	}
 
-	this.type = getTypeFromUnit(unit);
-	this.value = tryParseFloat(value.substr(0, value.length - unit.length));
-	this.unit = unit;
+	private validateSign(value: string) {
+		if (/^[+-]{2}/.test(value)) {
+			throw new Error('Only one leading +/- is allowed');
+		}
+	}
+
+	private validateDots(value: string) {
+		if (countDots(value) > 1) {
+			throw new Error('Only one dot is allowed');
+		}
+	}
 }
 
-CssDimension.prototype.valueOf = function() {
-	return this.value;
-};
-
-CssDimension.prototype.toString = function() {
-	return this.value + (this.unit || '');
-};
-
-function factory(value) {
-	return new CssDimension(value);
-}
-
-factory.CssDimension = CssDimension;
-
-module.exports = factory;
-
-function countDots(value) {
-	var m = value.match(/\./g);
+function countDots(value: string) {
+	const m = value.match(/\./g);
 	return m ? m.length : 0;
 }
 
-function tryParseFloat(value) {
-	var result = parseFloat(value);
+function tryParseFloat(value: string) {
+	const result = parseFloat(value);
 	if (isNaN(result)) {
 		throw new Error('Invalid number: ' + value);
 	}
 	return result;
 }
 
-var units = [].concat(
-	cssAngleUnits,
+const units = cssAngleUnits.concat(
 	cssFrequencyUnits,
 	cssLengthUnits,
 	cssResolutionUnits,
-	cssTimeUnits
+	cssTimeUnits,
 );
 
-function parseUnit(value) {
-	var m = value.match(/\D+$/);
-	var unit = m && m[0];
+function parseUnit(value: string) {
+	const m = value.match(/\D+$/);
+	const unit = m && m[0];
 	if (unit && units.indexOf(unit) === -1) {
 		throw new Error('Invalid unit: ' + unit);
 	}
 	return unit;
 }
 
-var unitTypeLookup = merge(
+const unitTypeLookup = merge(
 	createLookups(cssAngleUnits, 'angle'),
 	createLookups(cssFrequencyUnits, 'frequency'),
 	createLookups(cssResolutionUnits, 'resolution'),
-	createLookups(cssTimeUnits, 'time')
+	createLookups(cssTimeUnits, 'time'),
 );
 
-function createLookups(list, value) {
+function createLookups(list: string[], value: string) {
 	return zipObject(list, fill(Array(list.length), value));
 }
 
-function getTypeFromUnit(unit) {
+export function unitToType(unit: string) {
 	return unitTypeLookup[unit] || 'length';
 }

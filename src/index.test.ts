@@ -1,150 +1,137 @@
-var tape = require('tape');
-var cssLengthUnits = require('css-length-units');
-var cssAngleUnits = require('css-angle-units');
-var cssResolutionUnits = require('css-resolution-units');
-var cssFrequencyUnits = require('css-frequency-units');
-var cssTimeUnits = require('css-time-units');
+import test from 'ava';
 
-var units = [].concat(
-	cssAngleUnits,
-	cssFrequencyUnits,
-	cssLengthUnits,
-	cssResolutionUnits,
-	cssTimeUnits
-);
+const cssLengthUnits: string[] = require('css-length-units');
+const cssAngleUnits: string[] = require('css-angle-units');
+const cssResolutionUnits: string[] = require('css-resolution-units');
+const cssFrequencyUnits: string[] = require('css-frequency-units');
+const cssTimeUnits: string[] = require('css-time-units');
 
-var parseCssDimension = require('..');
+import CssDimension from './';
 
-tape('parse-css-dimension', function(t) {
-
+test('throws when a dot should be followed by a number', (t) => {
 	t.throws(
-		function() {
-			parseCssDimension('12.');
-		},
+		() => new CssDimension('12.'),
 		/The dot should be followed by a number/,
-		'throws when a dot should be followed by a number'
 	);
+});
 
+test('throws when more than one leading +/- is provided', (t) => {
 	t.throws(
-		function() {
-			parseCssDimension('+-12.2');
-		},
+		() => new CssDimension('+-12.2'),
 		/Only one leading \+\/- is allowed/,
-		'throws when more than one leading +/- is provided'
 	);
+});
 
+test('throws when more than one dot is provided', (t) => {
 	t.throws(
-		function() {
-			parseCssDimension('12.1.1');
-		},
+		() => new CssDimension('12.1.1'),
 		/Only one dot is allowed/,
-		'throws when more than one dot is provided'
 	);
+});
 
+test('throws when an invalid unit of "foo" is provided', (t) => {
 	t.throws(
-		function() {
-			parseCssDimension('12foo');
-		},
+		() => new CssDimension('12foo'),
 		/Invalid unit: foo/,
-		'throws when an invalid unit of "foo" is provided'
 	);
+});
 
+test('throws when an invalid number of "foo42" is provided', (t) => {
 	t.throws(
-		function() {
-			parseCssDimension('foo42');
-		},
+		() => new CssDimension('foo42'),
 		/Invalid number: foo/,
-		'throws when an invalid number of "foo42" is provided'
 	);
+});
 
-	t.equal(
-		parseCssDimension('42%') instanceof parseCssDimension.CssDimension,
+test('parse result is instance of CssDimension', (t) => {
+	t.is(
+		(CssDimension.parse('42%') as CssDimension) instanceof CssDimension,
 		true,
-		'creates an instance of CssDimension'
 	);
+});
 
-	t.equal(
-		parseCssDimension('42%') + 3,
-		45,
-		'supports adding numbers to the result'
-	);
+test('returns the numeric value with .value', (t) => {
+	t.true(typeof new CssDimension('42%').value === 'number');
+});
 
-	t.equal(
-		parseCssDimension('42%').toString() + 'foo',
+test('stringifies a percent', (t) => {
+	t.is(
+		new CssDimension('42%') + 'foo',
 		'42%foo',
-		'stringifies a percent'
 	);
+});
 
-	t.equal(
-		parseCssDimension('42').toString() + 'foo',
+test('stringifies a number', (t) => {
+	t.is(
+		new CssDimension('42') + 'foo',
 		'42foo',
-		'stringifies a number'
 	);
+});
 
-	var validNumbers = {
-		     '12': 12,
-		   '4.01': 4.01,
-		 '-456.8': -456.8,
-		    '0.0': 0,
-		   '+0.0': 0,
-		   '-0.0': 0,
-		    '.60': 0.6,
-		   '10e3': 10000,
-		'-3.4e-2': -0.034
-	};
+const validNumbers = {
+	'+0.0': 0,
+	'-0.0': -0,
+	'-3.4e-2': -0.034,
+	'-456.8': -456.8,
+	'.60': 0.6,
+	'0.0': 0,
+	'10e3': 10000,
+	'12': 12,
+	'4.01': 4.01,
+};
 
-	units.forEach(function(unit) {
-		Object.keys(validNumbers).forEach(function(rawNumber) {
-			var num = validNumbers[rawNumber];
+test('number conversion', (t) => {
+	const unit = '%';
+	Object.keys(validNumbers).forEach((rawNumber) => {
+		const num = validNumbers[rawNumber];
 
-			var d1 = parseCssDimension(rawNumber);
-			var msg = 'parses ' + rawNumber;
-			t.equal(d1.type, 'number', msg);
-			t.equal(d1.value, num, msg);
-			t.equal(d1.unit, undefined, msg);
+		const d1 = CssDimension.parse(rawNumber);
+		let msg = 'parses ' + rawNumber;
+		t.is(d1.type, 'number', msg);
+		t.is(d1.value, num, msg);
+		t.is(d1.unit, undefined, msg);
 
-			var d2 = parseCssDimension(rawNumber + '%');
-			msg += '%';
-			t.equal(d2.type, 'percentage', msg);
-			t.equal(d2.value, num, msg);
-			t.equal(d2.unit, '%', msg);
-		});
+		const d2 = CssDimension.parse(rawNumber + unit);
+		msg += unit;
+		t.is(d2.type, 'percentage', msg);
+		t.is(d2.value, num, msg);
+		t.is(d2.unit, unit, msg);
 	});
+});
 
+test('units and unit types', (t) => {
 	[
 		{
 			list: cssLengthUnits,
-			'type': 'length'
+			type: 'length',
 		},
 		{
 			list: cssAngleUnits,
-			'type': 'angle'
+			type: 'angle',
 		},
 		{
 			list: cssResolutionUnits,
-			'type': 'resolution'
+			type: 'resolution',
 		},
 		{
 			list: cssFrequencyUnits,
-			'type': 'frequency'
+			type: 'frequency',
 		},
 		{
 			list: cssTimeUnits,
-			'type': 'time'
-		}
-	].forEach(function(unitDef) {
-		unitDef.list.forEach(function(unit) {
-			Object.keys(validNumbers).forEach(function(rawNumber) {
-				var num = validNumbers[rawNumber];
+			type: 'time',
+		},
+	].forEach((unitDef) => {
+		unitDef.list.forEach((unit) => {
+			Object.keys(validNumbers).forEach((rawNumber) => {
+				const num = validNumbers[rawNumber];
 
-				var d1 = parseCssDimension(rawNumber + unit);
-				var msg = 'parses ' + rawNumber + unit;
-				t.equal(d1.type, unitDef.type, msg);
-				t.equal(d1.value, num, msg);
-				t.equal(d1.unit, unit, msg);
+				const d1 = CssDimension.parse(rawNumber + unit);
+				const msg = 'parses ' + rawNumber + unit;
+				t.is(d1.type, unitDef.type, msg);
+				t.is(d1.value, num, msg);
+				t.is(d1.unit, unit, msg);
 			});
 		});
 	});
-
-	t.end();
 });
