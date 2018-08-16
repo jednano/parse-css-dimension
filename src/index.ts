@@ -11,7 +11,7 @@ const cssTimeUnits: string[] = require('css-time-units');
 export default class CssDimension {
 
 	public static parse(value: string) {
-		return new CssDimension(value) as CssDimension & number;
+		return new CssDimension(value);
 	}
 
 	public type: string;
