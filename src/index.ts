@@ -8,24 +8,36 @@ const cssResolutionUnits: string[] = require('css-resolution-units');
 const cssFrequencyUnits: string[] = require('css-frequency-units');
 const cssTimeUnits: string[] = require('css-time-units');
 
+const numberPrefixPattern = /^[+|-]?\.?/;
+const eNotationPattern = /e[+-]?/i;
+const digitPattern = /^\d+$/;
+const dotPattern = /\./;
+
+export interface IOptions {
+	strict?: boolean;
+}
+
 export default class CssDimension {
 
-	public static parse(value: string) {
-		return new CssDimension(value);
+	public static parse(value: string, options?: IOptions) {
+		return new CssDimension(value, options);
 	}
 
 	public type: string;
 	public value: number;
 	public unit: string;
 
-	constructor(value: string) {
+	constructor(value: string, options?: IOptions) {
+
 		this.validateNumber(value);
 		this.validateSign(value);
 		this.validateDots(value);
 
+		const strict = !!(options && options.strict);
+
 		if (/%$/.test(value)) {
 			this.type = 'percentage';
-			this.value = tryParseFloat(value);
+			this.value = tryParseNumber(value.substring(0, value.length - 1), strict);
 			this.unit = '%';
 			return;
 		}
@@ -33,12 +45,12 @@ export default class CssDimension {
 		const unit = parseUnit(value);
 		if (!unit) {
 			this.type = 'number';
-			this.value = tryParseFloat(value);
+			this.value = tryParseNumber(value, strict);
 			return;
 		}
 
 		this.type = unitToType(unit);
-		this.value = tryParseFloat(value.substr(0, value.length - unit.length));
+		this.value = tryParseNumber(value.substr(0, value.length - unit.length), strict);
 		this.unit = unit;
 	}
 
@@ -74,12 +86,41 @@ function countDots(value: string) {
 	return m ? m.length : 0;
 }
 
+function tryParseNumber(value: string, strict: boolean) {
+	return strict ? tryParseStrict(value) : tryParseFloat(value);
+}
+
 function tryParseFloat(value: string) {
 	const result = parseFloat(value);
 	if (isNaN(result)) {
 		throw new Error('Invalid number: ' + value);
 	}
 	return result;
+}
+
+function tryParseStrict(value: string) {
+	const mval = value.replace(numberPrefixPattern, '');
+	const mdot = dotPattern.exec(mval);
+	if (mdot) {
+		if (!verifyDigits(mval.substr(0, mdot.index)) || !verifyIntExp(mval.substr(mdot.index + 1))) {
+			throw new Error(`Invalid number: ${value}`);
+		}
+	} else if (!verifyIntExp(mval)) {
+		throw new Error(`Invalid number: ${value}`);
+	}
+	return parseFloat(value);
+}
+
+function verifyIntExp(value: string) {
+	const m = eNotationPattern.exec(value);
+	if (m && !verifyDigits(value.substr(m.index + m[0].length))) {
+		return false;
+	}
+	return verifyDigits(m ? value.substr(0, m.index) : value);
+}
+
+function verifyDigits(value: string) {
+	return digitPattern.test(value);
 }
 
 const units = cssAngleUnits.concat(
