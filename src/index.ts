@@ -122,11 +122,8 @@ function normalizeNumber(value: string, allowDot: boolean = true): string {
 function tryParseStrict(value: string): number {
 	const nval = normalizeNumber(value);
 	const result = parseFloat(nval);
-	if (result.toString() !== nval) {
-		if (verifyZero(value) || verifyENotation(value)) {
-			return result;
-		}
-		throw new Error('Invalid number: ' + value);
+	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
+		throw new Error(`Invalid number: ${value}`);
 	}
 	return result;
 }
