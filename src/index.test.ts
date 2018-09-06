@@ -46,11 +46,20 @@ test('throws when an invalid unit of "foo" is provided', (t) => {
 	});
 });
 
-test('throws in mode when an invalid number of "foo42" is provided', (t) => {
+test('throws in strict mode when an invalid number of "foo42" is provided', (t) => {
 	parseOptions.forEach((options) => {
 		t.throws(
 			() => new CssDimension('foo42', options),
 			/Invalid number: foo/,
+		);
+	});
+});
+
+test('throws in strict mode when an invalid number of "NaN%" is provided', (t) => {
+	parseOptions.forEach((options) => {
+		t.throws(
+			() => new CssDimension('NaN%', options),
+			/Invalid number: NaN/,
 		);
 	});
 });
@@ -62,7 +71,7 @@ const strictInvalidENotationNumbers = [
 	'23e+0.07',
 ];
 
-test('throws in mode when a number with invalid e-notation is provided', (t) => {
+test('throws in strict mode when a number with invalid e-notation is provided', (t) => {
 	strictInvalidENotationNumbers.forEach((invalidNumber) => {
 		t.throws(
 			() => new CssDimension(invalidNumber, {strict: true}),
