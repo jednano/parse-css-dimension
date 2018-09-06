@@ -55,12 +55,19 @@ test('throws in strict mode when an invalid number of "foo42" is provided', (t) 
 	});
 });
 
-test('throws in strict mode when an invalid number of "NaN%" is provided', (t) => {
+const nonNumbers = [
+	'+.NaN%',
+	'NaN%',
+];
+
+test('throws in when non-number input with "NaN" is provided', (t) => {
 	parseOptions.forEach((options) => {
-		t.throws(
-			() => new CssDimension('NaN%', options),
-			/Invalid number: NaN/,
-		);
+		nonNumbers.forEach((nonNumber) => {
+			t.throws(
+				() => new CssDimension(nonNumber, options),
+				new RegExp('Invalid number: ' + nonNumber.replace('+', '\\+').replace(/%$/, '')),
+			);
+		});
 	});
 });
 
@@ -137,6 +144,7 @@ const validNumbers = {
 	'-456.8': -456.8,
 	'.60': 0.6,
 	'0.0': 0,
+	'10E-3': 0.01,
 	'10e3': 10000,
 	'12': 12,
 	'4.01': 4.01,
