@@ -98,35 +98,25 @@ function tryParseFloat(value: string) {
 function normalizeNumber(value: string, allowDot: boolean = true): string {
 	const match = numberPrefixPattern.exec(value);
 	if (!match) {
-		throw new Error('Invalid number: ' + value);
+		throw new Error(`Invalid number: ${value}`);
 	}
 	const [, sign, dot] = match;
-	let dots = dot ? 1 : 0;
-	const endingZero = /0$/.test(value);
 	if (sign === '+') {
-		value = value.substring(1);
+		value = value.substr(1);
 	}
-	if (dot === '.') {
+	if (dot) {
 		if (!allowDot) {
-			throw new Error('Invalid number (too many dots): ' + value);
+			throw new Error(`Invalid number (too many dots): ${value}`);
 		}
 		if (sign === '-') {
-			value = '-0' + value.substring(1);
+			value = '-0' + value.substr(1);
 		} else {
 			value = '0' + value;
 		}
-	} else if (endingZero || !allowDot) {
-		dots = countDots(value);
 	}
-	if (dots > 0) {
-			if (!allowDot) {
-				throw new Error('Invalid number (too many dots): ' + value);
-			}
-			if (endingZero) {
-				value = value.replace(/\.?0+$/, '');
-			}
-	}
-	return value;
+	return (dot || countDots(value))
+		? value.replace(/\.?0+$/, '')
+		: value;
 }
 
 function tryParseStrict(value: string): number {
