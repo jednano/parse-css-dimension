@@ -95,7 +95,7 @@ function tryParseFloat(value: string) {
 	return result;
 }
 
-function normalizeNumber(value: string, allowDot: boolean = true): string {
+function normalizeNumber(value: string, allowDot: boolean = true) {
 	const match = numberPrefixPattern.exec(value);
 	if (!match) {
 		throw new Error(`Invalid number: ${value}`);
@@ -119,7 +119,7 @@ function normalizeNumber(value: string, allowDot: boolean = true): string {
 		: value;
 }
 
-function tryParseStrict(value: string): number {
+function tryParseStrict(value: string) {
 	const nval = normalizeNumber(value);
 	const result = parseFloat(nval);
 	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
