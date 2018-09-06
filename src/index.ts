@@ -8,7 +8,7 @@ const cssResolutionUnits: string[] = require('css-resolution-units');
 const cssFrequencyUnits: string[] = require('css-frequency-units');
 const cssTimeUnits: string[] = require('css-time-units');
 
-const numberPrefixPattern = /^[+|-]?(\.)?\d/;
+const numberPrefixPattern = /^[+|-]?\.?/;
 const eNotationPattern = /e[+-]?/i;
 const digitPattern = /^\d+$/;
 const dotPattern = /\./;
@@ -99,17 +99,10 @@ function tryParseFloat(value: string) {
 }
 
 function tryParseStrict(value: string) {
-	const m1 = numberPrefixPattern.exec(value);
-	if (!m1) {
-		throw new Error(`Invalid number: ${value}`);
-	}
-	const mval = value.substr(m1[0].length - 1);
-	if (m1[1] && !verifyIntExp(mval)) {
-		throw new Error(`Invalid number: ${value}`);
-	}
-	const m2 = dotPattern.exec(mval);
-	if (m2) {
-		if (!verifyDigits(mval.substr(0, m2.index)) || !verifyIntExp(mval.substr(m2.index + 1))) {
+	const mval = value.replace(numberPrefixPattern, '');
+	const mdot = dotPattern.exec(mval);
+	if (mdot) {
+		if (!verifyDigits(mval.substr(0, mdot.index)) || !verifyIntExp(mval.substr(mdot.index + 1))) {
 			throw new Error(`Invalid number: ${value}`);
 		}
 	} else if (!verifyIntExp(mval)) {
