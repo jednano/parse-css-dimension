@@ -96,6 +96,7 @@ function tryParseFloat(value: string) {
 }
 
 function normalizeNumber(value: string, allowDot: boolean = true) {
+	value = value[0] === '0' ? value.replace(/^0+(\d)/, '$1') : value;
 	const match = numberPrefixPattern.exec(value);
 	if (!match) {
 		return null;
