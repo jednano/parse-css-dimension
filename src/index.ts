@@ -8,24 +8,33 @@ const cssResolutionUnits: string[] = require('css-resolution-units');
 const cssFrequencyUnits: string[] = require('css-frequency-units');
 const cssTimeUnits: string[] = require('css-time-units');
 
+const numberPrefixPattern = /^(\+|-)?(\.)?\d/;
+
+export interface IOptions {
+	strict?: boolean;
+}
+
 export default class CssDimension {
 
-	public static parse(value: string) {
-		return new CssDimension(value);
+	public static parse(value: string, options?: IOptions) {
+		return new CssDimension(value, options);
 	}
 
 	public type: string;
 	public value: number;
 	public unit: string;
 
-	constructor(value: string) {
+	constructor(value: string, options?: IOptions) {
+
 		this.validateNumber(value);
 		this.validateSign(value);
 		this.validateDots(value);
 
+		const strict = !!(options && options.strict);
+
 		if (/%$/.test(value)) {
 			this.type = 'percentage';
-			this.value = tryParseFloat(value);
+			this.value = tryParseNumber(value.substring(0, value.length - 1), strict);
 			this.unit = '%';
 			return;
 		}
@@ -33,12 +42,12 @@ export default class CssDimension {
 		const unit = parseUnit(value);
 		if (!unit) {
 			this.type = 'number';
-			this.value = tryParseFloat(value);
+			this.value = tryParseNumber(value, strict);
 			return;
 		}
 
 		this.type = unitToType(unit);
-		this.value = tryParseFloat(value.substr(0, value.length - unit.length));
+		this.value = tryParseNumber(value.substr(0, value.length - unit.length), strict);
 		this.unit = unit;
 	}
 
@@ -74,12 +83,69 @@ function countDots(value: string) {
 	return m ? m.length : 0;
 }
 
+function tryParseNumber(value: string, strict: boolean) {
+	return strict ? tryParseStrict(value) : tryParseFloat(value);
+}
+
 function tryParseFloat(value: string) {
 	const result = parseFloat(value);
 	if (isNaN(result)) {
 		throw new Error('Invalid number: ' + value);
 	}
 	return result;
+}
+
+function normalizeNumber(value: string, allowDot: boolean = true) {
+	value = value[0] === '0' ? value.replace(/^0+(\d)/, '$1') : value;
+	const match = numberPrefixPattern.exec(value);
+	if (!match) {
+		return null;
+	}
+	const [, sign, dot] = match;
+	if (sign === '+') {
+		value = value.substr(1);
+	}
+	if (dot) {
+		if (!allowDot) {
+			return null;
+		}
+		if (sign === '-') {
+			value = '-0' + value.substr(1);
+		} else {
+			value = '0' + value;
+		}
+	}
+	return (dot || countDots(value))
+		? value.replace(/\.?0+$/, '')
+		: value;
+}
+
+function tryParseStrict(value: string) {
+	const nval = normalizeNumber(value);
+	if (!nval) {
+		throw new Error(`Invalid number: ${value}`);
+	}
+	const result = parseFloat(nval);
+	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
+		throw new Error(`Invalid number: ${value}`);
+	}
+	return result;
+}
+
+function verifyZero(value: string) {
+	return /^[-+]?0\.0+$/.test(value);
+}
+
+function verifyENotation(value: string) {
+	const m = /e/i.exec(value);
+	if (!m || m.index === value.length - 1) {
+		return false;
+	}
+	const nval = normalizeNumber(value.substring(m.index + 1), false);
+	if (!nval) {
+		throw new Error(`Invalid number: ${value}`);
+	}
+	return parseInt(nval, 10).toString() === nval;
 }
 
 const units = cssAngleUnits.concat(
