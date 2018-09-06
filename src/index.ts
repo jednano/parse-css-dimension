@@ -98,7 +98,7 @@ function tryParseFloat(value: string) {
 function normalizeNumber(value: string, allowDot: boolean = true) {
 	const match = numberPrefixPattern.exec(value);
 	if (!match) {
-		throw new Error(`Invalid number: ${value}`);
+		return null;
 	}
 	const [, sign, dot] = match;
 	if (sign === '+') {
@@ -106,7 +106,7 @@ function normalizeNumber(value: string, allowDot: boolean = true) {
 	}
 	if (dot) {
 		if (!allowDot) {
-			throw new Error(`Invalid number (too many dots): ${value}`);
+			return null;
 		}
 		if (sign === '-') {
 			value = '-0' + value.substr(1);
@@ -121,6 +121,9 @@ function normalizeNumber(value: string, allowDot: boolean = true) {
 
 function tryParseStrict(value: string) {
 	const nval = normalizeNumber(value);
+	if (!nval) {
+		throw new Error(`Invalid number: ${value}`);
+	}
 	const result = parseFloat(nval);
 	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
 		throw new Error(`Invalid number: ${value}`);
@@ -137,12 +140,11 @@ function verifyENotation(value: string) {
 	if (!m || m.index === value.length - 1) {
 		return false;
 	}
-	try {
-		const nval = normalizeNumber(value.substring(m.index + 1), false);
-		return parseInt(nval, 10).toString() === nval;
-	} catch (err) {
-		throw new Error('Invalid number: ' + value);
+	const nval = normalizeNumber(value.substring(m.index + 1), false);
+	if (!nval) {
+		throw new Error(`Invalid number: ${value}`);
 	}
+	return parseInt(nval, 10).toString() === nval;
 }
 
 const units = cssAngleUnits.concat(
