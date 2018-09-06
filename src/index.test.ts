@@ -72,6 +72,7 @@ test('throws in when non-number input with "NaN" is provided', (t) => {
 });
 
 const strictInvalidENotationNumbers = [
+	'.23e-a07',
 	'23e.07',
 	'23e0.7',
 	'23e-.07',

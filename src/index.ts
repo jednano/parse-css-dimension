@@ -8,7 +8,10 @@ const cssResolutionUnits: string[] = require('css-resolution-units');
 const cssFrequencyUnits: string[] = require('css-frequency-units');
 const cssTimeUnits: string[] = require('css-time-units');
 
-const numberPrefixPattern = /^(\+|-)?(\.)?\d/;
+const numberPrefixPattern = /^[+|-]?(\.)?\d/;
+const eNotationPattern = /e[+-]?/i;
+const digitPattern = /^\d+$/;
+const dotPattern = /\./;
 
 export interface IOptions {
 	strict?: boolean;
@@ -95,57 +98,36 @@ function tryParseFloat(value: string) {
 	return result;
 }
 
-function normalizeNumber(value: string, allowDot: boolean = true) {
-	value = value[0] === '0' ? value.replace(/^0+(\d)/, '$1') : value;
-	const match = numberPrefixPattern.exec(value);
-	if (!match) {
-		return null;
-	}
-	const [, sign, dot] = match;
-	if (sign === '+') {
-		value = value.substr(1);
-	}
-	if (dot) {
-		if (!allowDot) {
-			return null;
-		}
-		if (sign === '-') {
-			value = '-0' + value.substr(1);
-		} else {
-			value = '0' + value;
-		}
-	}
-	return (dot || countDots(value))
-		? value.replace(/\.?0+$/, '')
-		: value;
-}
-
 function tryParseStrict(value: string) {
-	const nval = normalizeNumber(value);
-	if (!nval) {
+	const m1 = numberPrefixPattern.exec(value);
+	if (!m1) {
 		throw new Error(`Invalid number: ${value}`);
 	}
-	const result = parseFloat(nval);
-	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
+	const mval = value.substr(m1[0].length - 1);
+	if (m1[1] && !verifyIntExp(mval)) {
 		throw new Error(`Invalid number: ${value}`);
 	}
-	return result;
+	const m2 = dotPattern.exec(mval);
+	if (m2) {
+		if (!verifyDigits(mval.substr(0, m2.index)) || !verifyIntExp(mval.substr(m2.index + 1))) {
+			throw new Error(`Invalid number: ${value}`);
+		}
+	} else if (!verifyIntExp(mval)) {
+		throw new Error(`Invalid number: ${value}`);
+	}
+	return parseFloat(value);
 }
 
-function verifyZero(value: string) {
-	return /^[-+]?0\.0+$/.test(value);
-}
-
-function verifyENotation(value: string) {
-	const m = /e/i.exec(value);
-	if (!m || m.index === value.length - 1) {
+function verifyIntExp(value: string) {
+	const m = eNotationPattern.exec(value);
+	if (m && !verifyDigits(value.substr(m.index + m[0].length))) {
 		return false;
 	}
-	const nval = normalizeNumber(value.substring(m.index + 1), false);
-	if (!nval) {
-		throw new Error(`Invalid number: ${value}`);
-	}
-	return parseInt(nval, 10).toString() === nval;
+	return verifyDigits(m ? value.substr(0, m.index) : value);
+}
+
+function verifyDigits(value: string) {
+	return digitPattern.test(value);
 }
 
 const units = cssAngleUnits.concat(
