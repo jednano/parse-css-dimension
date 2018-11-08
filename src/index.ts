@@ -8,7 +8,7 @@ const cssResolutionUnits: string[] = require('css-resolution-units');
 const cssFrequencyUnits: string[] = require('css-frequency-units');
 const cssTimeUnits: string[] = require('css-time-units');
 
-const numberPrefixPattern = /^(\+|-)?(\.)?\d/;
+const numberPrefixPattern = /^(\+|-)?(\.)?/;
 
 export interface IOptions {
 	strict?: boolean;
@@ -95,54 +95,41 @@ function tryParseFloat(value: string) {
 	return result;
 }
 
-function normalizeNumber(value: string, allowDot: boolean = true): string {
+function normalizeNumber(value: string, allowDot = true) {
 	const match = numberPrefixPattern.exec(value);
 	if (!match) {
-		throw new Error('Invalid number: ' + value);
+		throw new Error(`Invalid number: ${value}`);
 	}
 	const [, sign, dot] = match;
-	let dots = dot ? 1 : 0;
-	const endingZero = /0$/.test(value);
 	if (sign === '+') {
-		value = value.substring(1);
+		value = value.substr(1);
 	}
-	if (dot === '.') {
+	if (dot) {
 		if (!allowDot) {
-			throw new Error('Invalid number (too many dots): ' + value);
+			throw new Error(`Invalid number (too many dots): ${value}`);
 		}
 		if (sign === '-') {
-			value = '-0' + value.substring(1);
+			value = '-0' + value.substr(1);
 		} else {
 			value = '0' + value;
 		}
-	} else if (endingZero || !allowDot) {
-		dots = countDots(value);
 	}
-	if (dots > 0) {
-			if (!allowDot) {
-				throw new Error('Invalid number (too many dots): ' + value);
-			}
-			if (endingZero) {
-				value = value.replace(/\.?0+$/, '');
-			}
-	}
-	return value;
+	return (dot || countDots(value))
+		? value.replace(/\.?0+$/, '')
+		: value;
 }
 
-function tryParseStrict(value: string): number {
+function tryParseStrict(value: string) {
 	const nval = normalizeNumber(value);
 	const result = parseFloat(nval);
-	if (result.toString() !== nval) {
-		if (verifyZero(value) || verifyENotation(value)) {
-			return result;
-		}
+	if (result.toString() !== nval && !verifyZero(value) && !verifyENotation(value)) {
 		throw new Error('Invalid number: ' + value);
 	}
 	return result;
 }
 
 function verifyZero(value: string) {
-	return /^[-+]?0\.0+$/.test(value);
+	return parseFloat(value) === 0;
 }
 
 function verifyENotation(value: string) {
@@ -151,7 +138,7 @@ function verifyENotation(value: string) {
 		return false;
 	}
 	try {
-		const nval = normalizeNumber(value.substring(m.index + 1), false);
+		const nval = normalizeNumber(value.substr(m.index + 1), false);
 		return parseInt(nval, 10).toString() === nval;
 	} catch (err) {
 		throw new Error('Invalid number: ' + value);
